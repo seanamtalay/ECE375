@@ -29,6 +29,7 @@
 .equ	EngDirL = 6				; Left Engine Direction Bit
 ; Use these action codes between the remote and robot
 ; MSB = 1 thus:
+.equ 	BotAddress = $7
 ; control signals are shifted right by one and ORed with 0b10000000 = $80
 .equ	MovFwd =  ($80|1<<(EngDirR-1)|1<<(EngDirL-1))	;0b10110000 Move Forward Action Code
 .equ	MovBck =  ($80|$00)								;0b10000000 Move Backward Action Code
@@ -101,17 +102,39 @@ INIT:
 ;*	Main Program
 ;***********************************************************
 MAIN:
-	;TODO: ???
-		rjmp	MAIN
+		in    mpr, PIND
+		ldi   toSend, 0
+		; Check for pushed buttons
+		sbrs  mpr, 0
+		ldi   toSend, TurnR
+		sbrs  mpr, 1
+		ldi   toSend, TurnL
+		sbrs  mpr, 5
+		ldi   toSend, MovFwd
+		sbrs  mpr, 6
+		ldi   toSend, MovBck
+		sbrs  mpr, 7
+		ldi   toSend, Halt
+		sbrs  mpr, 4
+		ldi   toSend, Freeze
+		tst   toSend
+		breq  MAIN
+		cpi   toSend, TestFreeze
+		breq  USART_Command
 
-;***********************************************************
-;*	Functions and Subroutines
-;***********************************************************
-
-;***********************************************************
-;*	Stored Program Data
-;***********************************************************
-
-;***********************************************************
-;*	Additional Program Includes
-;***********************************************************
+USART_Address:
+		lds   mpr, UCSR1A
+; Check if buffer is empty
+		sbrs  mpr, UDRE1
+		jmp  USART_Address
+		ldi   mpr, BotAddress
+		sts   UDR1, mpr
+USART_Command:
+		lds   mpr, UCSR1A
+; Check if buffer is empty
+		sbrs  mpr, UDRE1
+		jmp  USART_Command
+		sts   UDR1, toSend
+		; Output last send command to LEDS
+		out   PORTB, toSend 
+		jmp  MAIN

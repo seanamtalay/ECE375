@@ -1,6 +1,6 @@
 ;***********************************************************
-;*
-;*	Enter Name of file here
+;* 
+;*	Lab 8 RX
 ;*
 ;*	Enter the description of the program here
 ;*
@@ -22,6 +22,8 @@
 .def	waitcnt = r17			; Wait Loop Counter 
 .def	ilcnt = r18				; Inner Loop Counter 
 .def	olcnt = r19				; Outer Loop Counter 
+.def	addr_flag = r20	
+.def	prev_move = r21
 .equ	WTime = 100				; Time to wait in wait loop
 .equ	WskrR = 0				; Right Whisker Input Bit
 .equ	WskrL = 1				; Left Whisker Input Bit
@@ -30,7 +32,7 @@
 .equ	EngDirR = 5				; Right Engine Direction Bit
 .equ	EngDirL = 6				; Left Engine Direction Bit
 
-.equ	BotAddress = ;(Enter your robot's address here (8 bits))
+.equ	BotAddress = 0b00001001
 
 ;/////////////////////////////////////////////////////////////
 ;These macros are the values to make the TekBot Move.
@@ -57,6 +59,15 @@
 ;- Right whisker
 ;- USART receive
 
+.org 	$0002
+	rcall HitRight
+	reti 
+.org 	$0004
+	rcall HitLeft
+	reti
+.org 	$0006
+	rcall USART_Receive
+
 .org	$0046					; End of Interrupt Vectors
 
 ;***********************************************************
@@ -80,16 +91,16 @@ INIT:
 	out		PORTD, mpr
 	;USART1
 		ldi 	mpr, (1<<U2X1)
-		out 	UCSR1A, mpr
+		sts 	UCSR1A, mpr
 		;Set baudrate at 2400bps
 		ldi 	mpr, high(832) 	; Load high byte of 0x0340 
 		sts 	UBRR1H, mpr 	; UBRR0H in extended I/O space 
 		ldi 	mpr, low(832) 	; Load low byte of 0x0340 
-		out 	UBRR1L, mpr 	
+		sts 	UBRR1L, mpr 	
 
 		;Enable receiver and enable receive interrupts
 		ldi 	mpr, (1<<RXEN1 | 1<<TXEN1 | 1<<RXCIE1) 
-		out 	UCSR1B, mpr 		
+		sts 	UCSR1B, mpr 		
 
 		;Set frame format: 8 data bits, 2 stop bits
 		ldi 	mpr, (0<<UMSEL1 | 1<<USBS1 | 1<<UCSZ11 | 1<<UCSZ10) 
@@ -104,20 +115,54 @@ INIT:
 		ldi		mpr, (1<<ISC01) | (0<<ISC00) | (1<<ISC11) | (0<<ISC10)
 		sts		EICRA, mpr		;Use sts, EICRA in extended I/O space
 		
+	; Initialize Fwd Movement
+		ldi mpr, MovFwd
+		mov prev_move, mpr
+		out PORTB, mpr		
 		
+		sei
 	;Other
 
 ;***********************************************************
 ;*	Main Program
 ;***********************************************************
 MAIN:
-	;TODO: ???
 		rjmp	MAIN
 
 ;***********************************************************
 ;*	Functions and Subroutines
 ;***********************************************************
+;----------------------------------------------------------------
+; Sub:	USART_Receive
+; Desc:	Receive USART Command from Transmitter 
+;----------------------------------------------------------------
+USART_Receive:
+		push	mpr			; Save mpr register
 
+		;lds 	mpr, UDR1
+		lds  	mpr, UDR1			; Read data from Receive Data Buffer
+		sbrc	mpr, 7				;if byte is an address, skip
+		breq  	command				;if byte is an action, go to command
+		ldi   	addr_flag, 0	;clear address flag
+		cpi   	mpr, BotAddress; 
+		brne  	end_receive		;if address doesn't match, go to end receive
+		ldi   	addr_flag, 1	;if address does match, set the address flag
+		jmp   	end_receive
+		
+command:
+		;tst   addr_flag
+		;breq  end_receive
+		ldi   	addr_flag, 0
+		jmp  	end_receive
+
+end_receive:
+		out   	PORTB, prev_move
+		pop   	mpr
+		ret
+		
+		
+
+		
 ;----------------------------------------------------------------
 ; Sub:	HitRight
 ; Desc:	Handles functionality of the TekBot when the right whisker
@@ -140,6 +185,10 @@ HitRight:
 		out		PORTB, mpr			; Send command to port
 		ldi		waitcnt, WTime		; Wait for 1 second
 		rcall	Wait				; Call wait function
+		
+		ldi 	mpr,(1<<INT0 | 1<<INT1)	; clean the queue
+		out 	EIFR,mpr
+		
 		
 		; Move Forward again	
 		ldi		mpr, MovFwd					; Load Move Forward command
@@ -175,6 +224,10 @@ HitLeft:
 		out		PORTB, mpr		; Send command to port
 		ldi		waitcnt, WTime	; Wait for 1 second
 		rcall	Wait			; Call wait function
+
+		ldi 	mpr,(1<<INT0 | 1<<INT1)	; clean the queue
+		out 	EIFR,mpr
+		
 
 		; Move Forward again	
 		ldi		mpr, MovFwd					; Load Move Forward command
@@ -214,12 +267,4 @@ ILoop:	dec		ilcnt			; decrement ilcnt
 		pop		ilcnt		; Restore ilcnt register
 		pop		waitcnt		; Restore wait register
 		ret					; Return from subroutine
-
-;***********************************************************
-;*	Stored Program Data
-;***********************************************************
-
-;***********************************************************
-;*	Additional Program Includes
-;***********************************************************
 

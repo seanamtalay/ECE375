@@ -1,6 +1,6 @@
 ;***********************************************************
 ;*
-;*	Enter Name of file here
+;*	Lab 8 TX
 ;*
 ;*	Enter the description of the program here
 ;*
@@ -19,9 +19,11 @@
 ;*	Internal Register Definitions and Constants
 ;***********************************************************
 .def	mpr = r16				; Multi-Purpose Register
-.def	waitcnt = r17			; Wait Loop Counter 
-.def	ilcnt = r18				; Inner Loop Counter 
-.def	olcnt = r19				; Outer Loop Counter 
+.def 	mpr2 = r17
+.def	waitcnt = r18			; Wait Loop Counter 
+.def	ilcnt = r19				; Inner Loop Counter 
+.def	olcnt = r20				; Outer Loop Counter 
+
 .equ	WTime = 100				; Time to wait in wait loop
 .equ	EngEnR = 4				; Right Engine Enable Bit
 .equ	EngEnL = 7				; Left Engine Enable Bit
@@ -29,14 +31,13 @@
 .equ	EngDirL = 6				; Left Engine Direction Bit
 ; Use these action codes between the remote and robot
 ; MSB = 1 thus:
-.equ 	BotAddress = $7
+.equ 	BotAddress = 0b00001001
 ; control signals are shifted right by one and ORed with 0b10000000 = $80
 .equ	MovFwd =  ($80|1<<(EngDirR-1)|1<<(EngDirL-1))	;0b10110000 Move Forward Action Code
 .equ	MovBck =  ($80|$00)								;0b10000000 Move Backward Action Code
 .equ	TurnR =   ($80|1<<(EngDirL-1))					;0b10100000 Turn Right Action Code
 .equ	TurnL =   ($80|1<<(EngDirR-1))					;0b10010000 Turn Left Action Code
 .equ	Halt =    ($80|1<<(EngEnR-1)|1<<(EngEnL-1))		;0b11001000 Halt Action Code
-.equ	Freeze = 
 ;***********************************************************
 ;*	Start of Code Segment
 ;***********************************************************
@@ -71,16 +72,16 @@ INIT:
 	out		PORTD, mpr
 	;USART1
 		ldi 	mpr, (1<<U2X1)		;Set double data rate
-		out 	UCSR1A, mpr
+		sts 	UCSR1A, mpr
 		;Set baudrate at 2400bps
 		ldi 	mpr, high(832) 	; Load high byte of 0x0340 
 		sts 	UBRR1H, mpr 	; UBRR0H in extended I/O space 
 		ldi 	mpr, low(832) 	; Load low byte of 0x0340 
-		out 	UBRR1L, mpr 	
+		sts 	UBRR1L, mpr 	
 
 		;Enable receiver and enable receive interrupts
 		ldi 	mpr, (1<<RXEN1 | 1<<TXEN1 | 1<<RXCIE1) 
-		out 	UCSR1B, mpr 		
+		sts 	UCSR1B, mpr 		
 
 		;Set frame format: 8 data bits, 2 stop bits
 		ldi 	mpr, (0<<UMSEL1 | 1<<USBS1 | 1<<UCSZ11 | 1<<UCSZ10) 
@@ -95,7 +96,7 @@ INIT:
 		ldi		mpr, (1<<ISC01) | (0<<ISC00) | (1<<ISC11) | (0<<ISC10)
 		sts		EICRA, mpr		;Use sts, EICRA in extended I/O space
 		
-		
+		sei
 	;Other
 
 ;***********************************************************
@@ -103,7 +104,7 @@ INIT:
 ;***********************************************************
 MAIN:
 		in    mpr, PIND
-		ldi   toSend, 0
+		;ldi   toSend, 0
 		; Check for pushed buttons
 		sbrs  mpr, 0
 		;ldi   toSend, TurnR
@@ -165,9 +166,10 @@ TRANSMIT_FWD_COMMAND:
 ; Check if buffer is empty
 		sbrs  	mpr, UDRE1
 		jmp  	TRANSMIT_FWD_COMMAND
-		sts   	UDR1, MovFwd
+		ldi 	mpr2, MovFwd
+		sts   	UDR1, mpr2
 		; Output last send command to LEDS
-		out   	PORTB, MovFwd 
+		out   	PORTB, mpr2 
 		jmp  	MAIN
 
 ;************************************************************
@@ -185,9 +187,10 @@ TRANSMIT_BCK_COMMAND:
 		; Check if buffer is empty
 		sbrs  	mpr, UDRE1
 		jmp  	TRANSMIT_BCK_COMMAND
-		sts   	UDR1, MovBck
+		ldi 	mpr2, MovBck
+		sts   	UDR1, mpr2
 		; Output last send command to LEDS
-		out   	PORTB, MovBck 
+		out   	PORTB, mpr2 
 		jmp  	MAIN
 
 ;************************************************************
@@ -205,9 +208,10 @@ TRANSMIT_R_COMMAND:
 		; Check if buffer is empty
 		sbrs  	mpr, UDRE1
 		jmp  	TRANSMIT_R_COMMAND
-		sts   	UDR1, TurnR
+		ldi 	mpr2, TurnR
+		sts   	UDR1, mpr2
 		; Output last send command to LEDS
-		out   	PORTB, TurnR 
+		out   	PORTB, mpr2 
 		jmp  	MAIN
 
 ;************************************************************
@@ -225,9 +229,10 @@ TRANSMIT_R_COMMAND:
 		; Check if buffer is empty
 		sbrs  	mpr, UDRE1
 		jmp  	TRANSMIT_L_COMMAND
-		sts   	UDR1, TurnL
+		ldi 	mpr2, TurnL
+		sts   	UDR1, mpr2
 		; Output last send command to LEDS
-		out   	PORTB, TurnL 
+		out   	PORTB, mpr2 
 		jmp  	MAIN
 
 ;************************************************************

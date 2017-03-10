@@ -65,9 +65,10 @@
 .org 	$0004
 	rcall HitLeft
 	reti
-.org 	$0006
+.org 	$0003C
 	rcall USART_Receive
-
+	reti
+	
 .org	$0046					; End of Interrupt Vectors
 
 ;***********************************************************

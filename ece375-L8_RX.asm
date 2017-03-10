@@ -79,6 +79,8 @@ INIT:
 	ldi		mpr, $FF		;Initialize Port D Data Register
 	out		PORTD, mpr
 	;USART1
+		ldi 	mpr, (1<<U2X1)
+		out 	UCSR1A, mpr
 		;Set baudrate at 2400bps
 		ldi 	mpr, high(832) 	; Load high byte of 0x0340 
 		sts 	UBRR1H, mpr 	; UBRR0H in extended I/O space 
@@ -102,7 +104,7 @@ INIT:
 		ldi		mpr, (1<<ISC01) | (0<<ISC00) | (1<<ISC11) | (0<<ISC10)
 		sts		EICRA, mpr		;Use sts, EICRA in extended I/O space
 		
-		sei
+		
 	;Other
 
 ;***********************************************************

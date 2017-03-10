@@ -154,78 +154,81 @@ MAIN:
 ;***********************************************************
 
 TRANSMIT_FWD:
-		lds   mpr, UCSR1A
+		lds   	mpr, UCSR1A
 ; Check if buffer is empty
-		sbrs  mpr, UDRE1
-		jmp  TRANSMIT_FWD
-		ldi   mpr, BotAddress
-		sts   UDR1, mpr
+		sbrs  	mpr, UDRE1
+		jmp  	TRANSMIT_FWD
+		ldi   	mpr, BotAddress
+		sts   	UDR1, mpr
 TRANSMIT_FWD_COMMAND:
-		lds   mpr, UCSR1A
+		lds   	mpr, UCSR1A
 ; Check if buffer is empty
-		sbrs  mpr, UDRE1
-		jmp  TRANSMIT_FWD_COMMAND
-		sts   UDR1, MovFwd
+		sbrs  	mpr, UDRE1
+		jmp  	TRANSMIT_FWD_COMMAND
+		sts   	UDR1, MovFwd
 		; Output last send command to LEDS
-		out   PORTB, MovFwd 
-		jmp  MAIN
+		out   	PORTB, MovFwd 
+		jmp  	MAIN
 
 ;************************************************************
 
 TRANSMIT_BCK:
-		lds   mpr, UCSR1A
-; Check if buffer is empty
-		sbrs  mpr, UDRE1
-		jmp  TRANSMIT_BCK
-		ldi   mpr, BotAddress
-		sts   UDR1, mpr
+		lds   	mpr, UCSR1A
+		; Check if buffer is empty
+		sbrs  	mpr, UDRE1
+		jmp  	TRANSMIT_BCK
+		ldi   	mpr, BotAddress
+		sts   	UDR1, mpr
+
 TRANSMIT_BCK_COMMAND:
-		lds   mpr, UCSR1A
-; Check if buffer is empty
-		sbrs  mpr, UDRE1
-		jmp  TRANSMIT_BCK_COMMAND
-		sts   UDR1, MovBck
+		lds   	mpr, UCSR1A
+		; Check if buffer is empty
+		sbrs  	mpr, UDRE1
+		jmp  	TRANSMIT_BCK_COMMAND
+		sts   	UDR1, MovBck
 		; Output last send command to LEDS
-		out   PORTB, MovBck 
-		jmp  MAIN
+		out   	PORTB, MovBck 
+		jmp  	MAIN
 
 ;************************************************************
 
 TRANSMIT_R:
-		lds   mpr, UCSR1A
-; Check if buffer is empty
-		sbrs  mpr, UDRE1
-		jmp  TRANSMIT_R
-		ldi   mpr, BotAddress
-		sts   UDR1, mpr
+		lds   	mpr, UCSR1A
+		; Check if buffer is empty
+		sbrs  	mpr, UDRE1
+		jmp  	TRANSMIT_R
+		ldi   	mpr, BotAddress
+		sts   	UDR1, mpr
+		
 TRANSMIT_R_COMMAND:
-		lds   mpr, UCSR1A
-; Check if buffer is empty
-		sbrs  mpr, UDRE1
-		jmp  TRANSMIT_R_COMMAND
-		sts   UDR1, TurnR
+		lds   	mpr, UCSR1A
+		; Check if buffer is empty
+		sbrs  	mpr, UDRE1
+		jmp  	TRANSMIT_R_COMMAND
+		sts   	UDR1, TurnR
 		; Output last send command to LEDS
-		out   PORTB, TurnR 
-		jmp  MAIN
+		out   	PORTB, TurnR 
+		jmp  	MAIN
 
 ;************************************************************
 
 TRANSMIT_L:
-		lds   mpr, UCSR1A
-; Check if buffer is empty
-		sbrs  mpr, UDRE1
-		jmp  TRANSMIT_L
-		ldi   mpr, BotAddress
-		sts   UDR1, mpr
+		lds   	mpr, UCSR1A
+		; Check if buffer is empty
+		sbrs  	mpr, UDRE1
+		jmp  	TRANSMIT_L
+		ldi   	mpr, BotAddress
+		sts   	UDR1, mpr
+		
 TRANSMIT_R_COMMAND:
-		lds   mpr, UCSR1A
-; Check if buffer is empty
-		sbrs  mpr, UDRE1
-		jmp  TRANSMIT_L_COMMAND
-		sts   UDR1, TurnL
+		lds   	mpr, UCSR1A
+		; Check if buffer is empty
+		sbrs  	mpr, UDRE1
+		jmp  	TRANSMIT_L_COMMAND
+		sts   	UDR1, TurnL
 		; Output last send command to LEDS
-		out   PORTB, TurnL 
-		jmp  MAIN
+		out   	PORTB, TurnL 
+		jmp  	MAIN
 
 ;************************************************************
 

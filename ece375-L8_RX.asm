@@ -153,6 +153,8 @@ USART_Receive:
 		
 command:
 		out 	PORTB, mpr
+		
+		
 		brne  	end_receive
 
 end_receive:

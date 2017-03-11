@@ -19,11 +19,12 @@
 ;*	Internal Register Definitions and Constants
 ;***********************************************************
 .def	mpr = r16				; Multi-Purpose Register
-.def	waitcnt = r17			; Wait Loop Counter 
-.def	ilcnt = r18				; Inner Loop Counter 
-.def	olcnt = r19				; Outer Loop Counter 
-.def	addr_flag = r20	
-.def	prev_move = r21
+.def 	mpr2 = r17
+.def	waitcnt = r18			; Wait Loop Counter 
+.def	ilcnt = r19				; Inner Loop Counter 
+.def	olcnt = r20				; Outer Loop Counter 
+.def	addr_flag = r21	
+.def	prev_move = r22
 .equ	WTime = 100				; Time to wait in wait loop
 .equ	WskrR = 0				; Right Whisker Input Bit
 .equ	WskrL = 1				; Left Whisker Input Bit
@@ -60,14 +61,16 @@
 ;- USART receive
 
 .org 	$0002
-	rcall HitRight
-	reti 
+		rcall HitRight
+		reti 
+		
 .org 	$0004
-	rcall HitLeft
-	reti
+		rcall HitLeft
+		reti
+	
 .org 	$0003C
-	rcall USART_Receive
-	reti
+		rcall USART_Receive
+		reti
 	
 .org	$0046					; End of Interrupt Vectors
 
@@ -117,9 +120,8 @@ INIT:
 		sts		EICRA, mpr		;Use sts, EICRA in extended I/O space
 		
 	; Initialize Fwd Movement
-		ldi mpr, MovFwd
-		mov prev_move, mpr
-		out PORTB, mpr		
+		ldi 	mpr, MovFwd
+		out 	PORTB, mpr		
 		
 		sei
 	;Other
@@ -142,22 +144,18 @@ USART_Receive:
 
 		;lds 	mpr, UDR1
 		lds  	mpr, UDR1			; Read data from Receive Data Buffer
-		sbrc	mpr, 7				;if byte is an address, skip
-		breq  	command				;if byte is an action, go to command
-		ldi   	addr_flag, 0	;clear address flag
-		cpi   	mpr, BotAddress; 
-		brne  	end_receive		;if address doesn't match, go to end receive
-		ldi   	addr_flag, 1	;if address does match, set the address flag
-		jmp   	end_receive
+		
+		ldi		mpr2, 0b00001001				;if byte is an address, skip
+		cpi   	mpr2, BotAddress;
+		rjmp  	command				;if byte is an action, go to command
+		
+
 		
 command:
-		;tst   addr_flag
-		;breq  end_receive
-		ldi   	addr_flag, 0
-		jmp  	end_receive
+		out 	PORTB, mpr
+		brne  	end_receive
 
 end_receive:
-		out   	PORTB, prev_move
 		pop   	mpr
 		ret
 		

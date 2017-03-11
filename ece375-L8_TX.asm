@@ -74,9 +74,9 @@ INIT:
 		ldi 	mpr, (1<<U2X1)		;Set double data rate
 		sts 	UCSR1A, mpr
 		;Set baudrate at 2400bps
-		ldi 	mpr, high(832) 	; Load high byte of 0x0340 
+		ldi 	mpr, high(416) 	; Load high byte of 0x0340 
 		sts 	UBRR1H, mpr 	; UBRR0H in extended I/O space 
-		ldi 	mpr, low(832) 	; Load low byte of 0x0340 
+		ldi 	mpr, low(416) 	; Load low byte of 0x0340 
 		sts 	UBRR1L, mpr 	
 
 		;Enable receiver and enable receive interrupts
@@ -224,7 +224,7 @@ TRANSMIT_L:
 		ldi   	mpr, BotAddress
 		sts   	UDR1, mpr
 		
-TRANSMIT_R_COMMAND:
+TRANSMIT_L_COMMAND:
 		lds   	mpr, UCSR1A
 		; Check if buffer is empty
 		sbrs  	mpr, UDRE1

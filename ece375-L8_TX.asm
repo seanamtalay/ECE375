@@ -84,7 +84,7 @@ INIT:
 		sts 	UCSR1B, mpr 		
 
 		;Set frame format: 8 data bits, 2 stop bits
-		ldi 	mpr, (0<<UMSEL1 | 1<<USBS1 | 1<<UCSZ11 | 1<<UCSZ10) 
+		ldi 	mpr, (1<<UCSZ10)|(1<<UCSZ11)|(1<<USBS1)|(1<<UPM01) 
 		sts 	UCSR1C, mpr 		; UCSR0C in extended I/O space
 
 	
@@ -104,33 +104,20 @@ INIT:
 ;***********************************************************
 MAIN:
 		in    mpr, PIND
-		;ldi   toSend, 0
-		; Check for pushed buttons
+		
 		sbrs  mpr, 0
-		;ldi   toSend, TurnR
 		rjmp  TRANSMIT_R
 		
-		sbrs  mpr, 1
-		;ldi   toSend, TurnL
+		sbrs  mpr, 1		
 		rjmp  TRANSMIT_L
 		
-		sbrs  mpr, 5
-		;ldi   toSend, MovFwd
+		sbrs  mpr, 2		
 		rjmp  TRANSMIT_FWD
 		
-		sbrs  mpr, 6
-		;ldi   toSend, MovBck
+		sbrs  mpr, 3		
 		rjmp  TRANSMIT_BCK
 		
-		;sbrs  mpr, 7
-		;ldi   toSend, Halt
-		;sbrs  mpr, 4
-		;ldi   toSend, Freeze
-		;tst   toSend
 		
-		;breq  MAIN
-		;cpi   toSend, TestFreeze
-		;breq  USART_Command
 		jmp  MAIN
 
 ;USART_Address:
@@ -154,86 +141,57 @@ MAIN:
 ;*	Functions and Subroutines
 ;***********************************************************
 
+waitSent:
+		lds 	mpr, UCSR1A
+		sbrs 	mpr, TXC1
+		rjmp 	waitSent
+		ret
+
 TRANSMIT_FWD:
-		lds   	mpr, UCSR1A
-; Check if buffer is empty
-		sbrs  	mpr, UDRE1
-		jmp  	TRANSMIT_FWD
-		ldi   	mpr, BotAddress
-		sts   	UDR1, mpr
-TRANSMIT_FWD_COMMAND:
-		lds   	mpr, UCSR1A
-; Check if buffer is empty
-		sbrs  	mpr, UDRE1
-		jmp  	TRANSMIT_FWD_COMMAND
-		ldi 	mpr2, MovFwd
-		sts   	UDR1, mpr2
-		; Output last send command to LEDS
-		out   	PORTB, mpr2 
-		jmp  	MAIN
+		ldi 	mpr, BotAddress
+		sts 	UDR1, mpr
+		rcall 	waitSent
+		ldi 	mpr, MovFwd
+		sts 	UDR1, mpr
+		out 	PORTB, mpr
+		rcall 	waitSent
+		rjmp 	MAIN
 
 ;************************************************************
 
 TRANSMIT_BCK:
-		lds   	mpr, UCSR1A
-		; Check if buffer is empty
-		sbrs  	mpr, UDRE1
-		jmp  	TRANSMIT_BCK
-		ldi   	mpr, BotAddress
-		sts   	UDR1, mpr
-
-TRANSMIT_BCK_COMMAND:
-		lds   	mpr, UCSR1A
-		; Check if buffer is empty
-		sbrs  	mpr, UDRE1
-		jmp  	TRANSMIT_BCK_COMMAND
-		ldi 	mpr2, MovBck
-		sts   	UDR1, mpr2
-		; Output last send command to LEDS
-		out   	PORTB, mpr2 
-		jmp  	MAIN
+		ldi 	mpr, BotAddress
+		sts 	UDR1, mpr
+		rcall 	waitSent
+		ldi 	mpr, MovBck
+		sts 	UDR1, mpr
+		out 	PORTB, mpr
+		rcall 	waitSent
+		rjmp 	MAIN
 
 ;************************************************************
 
 TRANSMIT_R:
-		lds   	mpr, UCSR1A
-		; Check if buffer is empty
-		sbrs  	mpr, UDRE1
-		jmp  	TRANSMIT_R
-		ldi   	mpr, BotAddress
-		sts   	UDR1, mpr
-		
-TRANSMIT_R_COMMAND:
-		lds   	mpr, UCSR1A
-		; Check if buffer is empty
-		sbrs  	mpr, UDRE1
-		jmp  	TRANSMIT_R_COMMAND
-		ldi 	mpr2, TurnR
-		sts   	UDR1, mpr2
-		; Output last send command to LEDS
-		out   	PORTB, mpr2 
-		jmp  	MAIN
+		ldi 	mpr, BotAddress
+		sts 	UDR1, mpr
+		rcall 	waitSent
+		ldi 	mpr, TurnR
+		sts 	UDR1, mpr
+		out 	PORTB, mpr
+		rcall 	waitSent
+		rjmp 	MAIN
 
 ;************************************************************
 
 TRANSMIT_L:
-		lds   	mpr, UCSR1A
-		; Check if buffer is empty
-		sbrs  	mpr, UDRE1
-		jmp  	TRANSMIT_L
-		ldi   	mpr, BotAddress
-		sts   	UDR1, mpr
-		
-TRANSMIT_L_COMMAND:
-		lds   	mpr, UCSR1A
-		; Check if buffer is empty
-		sbrs  	mpr, UDRE1
-		jmp  	TRANSMIT_L_COMMAND
-		ldi 	mpr2, TurnL
-		sts   	UDR1, mpr2
-		; Output last send command to LEDS
-		out   	PORTB, mpr2 
-		jmp  	MAIN
+		ldi 	mpr, BotAddress
+		sts 	UDR1, mpr
+		rcall 	waitSent
+		ldi 	mpr, TurnL
+		sts 	UDR1, mpr
+		out 	PORTB, mpr
+		rcall 	waitSent
+		rjmp 	MAIN
 
 ;************************************************************
 

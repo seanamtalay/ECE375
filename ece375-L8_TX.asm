@@ -120,23 +120,7 @@ MAIN:
 		
 		jmp  MAIN
 
-;USART_Address:
-;		lds   mpr, UCSR1A
-; Check if buffer is empty
-;		sbrs  mpr, UDRE1
-;		jmp  USART_Address
-;		ldi   mpr, BotAddress
-;		sts   UDR1, mpr
-;USART_Command:
-;		lds   mpr, UCSR1A
-; Check if buffer is empty
-;		sbrs  mpr, UDRE1
-;		jmp  USART_Command
-;		sts   UDR1, toSend
-		; Output last send command to LEDS
-;		out   PORTB, toSend 
-;		jmp  MAIN
-		
+
 ;***********************************************************
 ;*	Functions and Subroutines
 ;***********************************************************
@@ -150,11 +134,20 @@ waitSent:
 TRANSMIT_FWD:
 		ldi 	mpr, BotAddress
 		sts 	UDR1, mpr
-		rcall 	waitSent
+		
+TRANSMIT_FWD_LOOP1:
+		lds 	mpr, UCSR1A
+		sbrs 	mpr, TXC1
+		rjmp 	TRANSMIT_FWD_LOOP1
+		
 		ldi 	mpr, MovFwd
 		sts 	UDR1, mpr
 		out 	PORTB, mpr
-		rcall 	waitSent
+TRANSMIT_FWD_LOOP2:
+		lds 	mpr, UCSR1A
+		sbrs 	mpr, TXC1
+		rjmp 	TRANSMIT_FWD_LOOP2
+		
 		rjmp 	MAIN
 
 ;************************************************************
@@ -162,11 +155,20 @@ TRANSMIT_FWD:
 TRANSMIT_BCK:
 		ldi 	mpr, BotAddress
 		sts 	UDR1, mpr
-		rcall 	waitSent
+		
+TRANSMIT_BCK_LOOP1:
+		lds 	mpr, UCSR1A
+		sbrs 	mpr, TXC1
+		rjmp 	TRANSMIT_BCK_LOOP1
+		
 		ldi 	mpr, MovBck
 		sts 	UDR1, mpr
 		out 	PORTB, mpr
-		rcall 	waitSent
+TRANSMIT_BCK_LOOP2
+		lds 	mpr, UCSR1A
+		sbrs 	mpr, TXC1
+		rjmp 	TRANSMIT_BCK_LOOP2
+		
 		rjmp 	MAIN
 
 ;************************************************************
@@ -174,11 +176,19 @@ TRANSMIT_BCK:
 TRANSMIT_R:
 		ldi 	mpr, BotAddress
 		sts 	UDR1, mpr
-		rcall 	waitSent
+TRANSMIT_R_LOOP1:
+		lds 	mpr, UCSR1A
+		sbrs 	mpr, TXC1
+		rjmp 	TRANSMIT_R_LOOP1
+		
 		ldi 	mpr, TurnR
 		sts 	UDR1, mpr
 		out 	PORTB, mpr
-		rcall 	waitSent
+TRANSMIT_R_LOOP2:
+		lds 	mpr, UCSR1A
+		sbrs 	mpr, TXC1
+		rjmp 	TRANSMIT_R_LOOP2
+		
 		rjmp 	MAIN
 
 ;************************************************************
@@ -186,11 +196,19 @@ TRANSMIT_R:
 TRANSMIT_L:
 		ldi 	mpr, BotAddress
 		sts 	UDR1, mpr
-		rcall 	waitSent
+TRANSMIT_L_LOOP1:
+		lds 	mpr, UCSR1A
+		sbrs 	mpr, TXC1
+		rjmp 	TRANSMIT_L_LOOP1
+		
 		ldi 	mpr, TurnL
 		sts 	UDR1, mpr
 		out 	PORTB, mpr
-		rcall 	waitSent
+TRANSMIT_L_LOOP2:
+		lds 	mpr, UCSR1A
+		sbrs 	mpr, TXC1
+		rjmp 	TRANSMIT_L_LOOP2
+		
 		rjmp 	MAIN
 
 ;************************************************************

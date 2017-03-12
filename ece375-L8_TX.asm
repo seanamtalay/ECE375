@@ -31,7 +31,7 @@
 .equ	EngDirL = 6				; Left Engine Direction Bit
 ; Use these action codes between the remote and robot
 ; MSB = 1 thus:
-.equ 	BotAddress = 0b00001001
+.equ 	BotAddress = 0b10001001
 ; control signals are shifted right by one and ORed with 0b10000000 = $80
 .equ	MovFwd =  ($80|1<<(EngDirR-1)|1<<(EngDirL-1))	;0b10110000 Move Forward Action Code
 .equ	MovBck =  ($80|$00)								;0b10000000 Move Backward Action Code

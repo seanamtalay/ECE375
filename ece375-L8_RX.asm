@@ -144,8 +144,8 @@ USART_Receive:
 		push 	waitcnt
 		
 		lds  	mpr, UDR1			; Read data from Receive Data Buffer
-		ldi		mpr2, 0b10001001				;if byte is an address, skip
-		cpi   	mpr2, BotAddress;
+		;ldi		mpr2, 0b10001001				;if byte is an address, skip
+		;cpi   	mpr2, BotAddress;
 		
 		out 	PORTB, mpr		
 		ldi 	mpr,(1<<TXEN1)|(0<<RXEN1)|(0<<RXCIE1)

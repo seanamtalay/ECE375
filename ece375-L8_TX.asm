@@ -164,7 +164,7 @@ TRANSMIT_BCK_LOOP1:
 		ldi 	mpr, MovBck
 		sts 	UDR1, mpr
 		out 	PORTB, mpr
-TRANSMIT_BCK_LOOP2
+TRANSMIT_BCK_LOOP2:
 		lds 	mpr, UCSR1A
 		sbrs 	mpr, TXC1
 		rjmp 	TRANSMIT_BCK_LOOP2

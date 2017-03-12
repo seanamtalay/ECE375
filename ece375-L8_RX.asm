@@ -146,7 +146,7 @@ USART_Receive:
 		lds  	mpr, UDR1			; Read data from Receive Data Buffer
 		;ldi		mpr2, 0b10001001				;if byte is an address, skip
 		ldi		mpr2, BotAddress
-		cpse   	mpr, mpr2;	
+		cpse   	mpr, mpr2	
 		out 	PORTB, mpr	
 		
 		ldi 	mpr,(1<<TXEN1)|(0<<RXEN1)|(0<<RXCIE1)
@@ -158,6 +158,9 @@ USART_Receive:
 
 		ldi 	mpr,(1<<TXEN1)|(1<<RXEN1)|(1<<RXCIE1)
 		sts 	UCSR1B, mpr
+		
+		ldi 	mpr, MovFwd
+		out 	PORTB, mpr		
 		
 		pop 	waitcnt
 		pop   	mpr

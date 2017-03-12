@@ -74,9 +74,9 @@ INIT:
 		ldi 	mpr, (1<<U2X1)		;Set double data rate
 		sts 	UCSR1A, mpr
 		;Set baudrate at 2400bps
-		ldi 	mpr, high(832) 	; Load high byte of 0x0340 
-		sts 	UBRR1H, mpr 	; UBRR0H in extended I/O space 
-		ldi 	mpr, low(832) 	; Load low byte of 0x0340 
+		ldi 	mpr, high(416) 	; Load high byte of 0x0340 
+		sts 	UBRR1H, mpr 	; UBRR1H in extended I/O space 
+		ldi 	mpr, low(416) 	; Load low byte of 0x0340 
 		sts 	UBRR1L, mpr 	
 
 		;Enable receiver and enable receive interrupts
@@ -87,17 +87,9 @@ INIT:
 		ldi 	mpr, (1<<UCSZ10)|(1<<UCSZ11)|(1<<USBS1)|(1<<UPM01) 
 		sts 	UCSR1C, mpr 		; UCSR0C in extended I/O space
 
-	
-	;External Interrupts
-		;Set the External Interrupt Mask
-		ldi		mpr, (1<<INT0) | (1<<INT1)
-		out		EIMSK, mpr
-		;Set the Interrupt Sense Control to falling edge detection
-		ldi		mpr, (1<<ISC01) | (0<<ISC00) | (1<<ISC11) | (0<<ISC10)
-		sts		EICRA, mpr		;Use sts, EICRA in extended I/O space
-		
-		sei
-	;Other
+	clr mpr
+	out PORTB, mpr
+
 
 ;***********************************************************
 ;*	Main Program
@@ -105,30 +97,66 @@ INIT:
 MAIN:
 		in    mpr, PIND
 		
-		sbrs  mpr, 0
+		sbrs  mpr, 7
 		rjmp  TRANSMIT_R
-		
-		sbrs  mpr, 1		
+		sbrs  mpr, 6		
 		rjmp  TRANSMIT_L
-		
-		sbrs  mpr, 2		
+		sbrs  mpr, 5		
 		rjmp  TRANSMIT_FWD
-		
-		sbrs  mpr, 3		
+		sbrs  mpr, 4		
 		rjmp  TRANSMIT_BCK
 		
-		
-		jmp  MAIN
+		rjmp 	MAIN
 
 ;***********************************************************
 ;*	Functions and Subroutines
 ;***********************************************************
 
-waitSent:
+TRANSMIT_R:
+		ldi 	mpr, BotAddress
+		sts 	UDR1, mpr
+		
+		
+TRANSMIT_R_LOOP1:
 		lds 	mpr, UCSR1A
-		sbrs 	mpr, TXC1
-		rjmp 	waitSent
-		ret
+		sbrs 	mpr, UDRE1
+		rcall 	TRANSMIT_R_LOOP1
+		
+		ldi 	mpr, TurnR
+		sts 	UDR1, mpr
+		out 	PORTB, mpr
+		ldi		waitcnt, 250
+		rcall	Wait
+		
+TRANSMIT_R_LOOP2:
+		lds 	mpr, UCSR1A
+		sbrs 	mpr, UDRE1
+		rjmp 	TRANSMIT_R_LOOP2
+		
+		rjmp 	MAIN
+
+;************************************************************
+
+TRANSMIT_L:
+		ldi 	mpr, BotAddress
+		sts 	UDR1, mpr
+TRANSMIT_L_LOOP1:
+		lds 	mpr, UCSR1A
+		sbrs 	mpr, UDRE1
+		rjmp 	TRANSMIT_L_LOOP1
+		
+		ldi 	mpr, TurnL
+		sts 	UDR1, mpr
+		out 	PORTB, mpr
+		ldi		waitcnt, 250
+		rcall	Wait
+TRANSMIT_L_LOOP2:
+		lds 	mpr, UCSR1A
+		sbrs 	mpr, UDRE1
+		rjmp 	TRANSMIT_L_LOOP2
+		
+		rjmp 	MAIN
+
 
 TRANSMIT_FWD:
 		ldi 	mpr, BotAddress
@@ -136,15 +164,17 @@ TRANSMIT_FWD:
 		
 TRANSMIT_FWD_LOOP1:
 		lds 	mpr, UCSR1A
-		sbrs 	mpr, TXC1
+		sbrs 	mpr, UDRE1
 		rjmp 	TRANSMIT_FWD_LOOP1
 		
 		ldi 	mpr, MovFwd
 		sts 	UDR1, mpr
 		out 	PORTB, mpr
+		ldi		waitcnt, 250
+		rcall	Wait
 TRANSMIT_FWD_LOOP2:
 		lds 	mpr, UCSR1A
-		sbrs 	mpr, TXC1
+		sbrs 	mpr, UDRE1
 		rjmp 	TRANSMIT_FWD_LOOP2
 		
 		rjmp 	MAIN
@@ -157,58 +187,49 @@ TRANSMIT_BCK:
 		
 TRANSMIT_BCK_LOOP1:
 		lds 	mpr, UCSR1A
-		sbrs 	mpr, TXC1
+		sbrs 	mpr, UDRE1
 		rjmp 	TRANSMIT_BCK_LOOP1
 		
 		ldi 	mpr, MovBck
 		sts 	UDR1, mpr
 		out 	PORTB, mpr
+		ldi		waitcnt, 250
+		rcall	Wait
 TRANSMIT_BCK_LOOP2:
 		lds 	mpr, UCSR1A
-		sbrs 	mpr, TXC1
+		sbrs 	mpr, UDRE1
 		rjmp 	TRANSMIT_BCK_LOOP2
 		
 		rjmp 	MAIN
 
 ;************************************************************
 
-TRANSMIT_R:
-		ldi 	mpr, BotAddress
-		sts 	UDR1, mpr
-TRANSMIT_R_LOOP1:
-		lds 	mpr, UCSR1A
-		sbrs 	mpr, TXC1
-		rjmp 	TRANSMIT_R_LOOP1
-		
-		ldi 	mpr, TurnR
-		sts 	UDR1, mpr
-		out 	PORTB, mpr
-TRANSMIT_R_LOOP2:
-		lds 	mpr, UCSR1A
-		sbrs 	mpr, TXC1
-		rjmp 	TRANSMIT_R_LOOP2
-		
-		rjmp 	MAIN
 
 ;************************************************************
+;----------------------------------------------------------------
+; Sub:	Wait
+; Desc:	A wait loop that is 16 + 159975*waitcnt cycles or roughly 
+;		waitcnt*10ms.  Just initialize wait for the specific amount 
+;		of time in 10ms intervals. Here is the general eqaution
+;		for the number of clock cycles in the wait loop:
+;			((3 * ilcnt + 3) * olcnt + 3) * waitcnt + 13 + call
+;----------------------------------------------------------------
+Wait:
+		push	waitcnt			; Save wait register
+		push	ilcnt			; Save ilcnt register
+		push	olcnt			; Save olcnt register
 
-TRANSMIT_L:
-		ldi 	mpr, BotAddress
-		sts 	UDR1, mpr
-TRANSMIT_L_LOOP1:
-		lds 	mpr, UCSR1A
-		sbrs 	mpr, TXC1
-		rjmp 	TRANSMIT_L_LOOP1
-		
-		ldi 	mpr, TurnL
-		sts 	UDR1, mpr
-		out 	PORTB, mpr
-TRANSMIT_L_LOOP2:
-		lds 	mpr, UCSR1A
-		sbrs 	mpr, TXC1
-		rjmp 	TRANSMIT_L_LOOP2
-		
-		rjmp 	MAIN
+Loop:	ldi		olcnt, 224		; load olcnt register
+OLoop:	ldi		ilcnt, 237		; load ilcnt register
+ILoop:	dec		ilcnt			; decrement ilcnt
+		brne	ILoop			; Continue Inner Loop
+		dec		olcnt			; decrement olcnt
+		brne	OLoop			; Continue Outer Loop
+		dec		waitcnt			; Decrement wait 
+		brne	Loop			; Continue Wait loop	
 
-;************************************************************
+		pop		olcnt		; Restore olcnt register
+		pop		ilcnt		; Restore ilcnt register
+		pop		waitcnt		; Restore wait register
+		ret					; Return from subroutine
 

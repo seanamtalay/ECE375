@@ -97,9 +97,9 @@ INIT:
 		ldi 	mpr, (1<<U2X1)
 		sts 	UCSR1A, mpr
 		;Set baudrate at 2400bps
-		ldi 	mpr, high(832) 	; Load high byte of 0x0340 
+		ldi 	mpr, high(416) 	; Load high byte of 0x0340 
 		sts 	UBRR1H, mpr 	; UBRR0H in extended I/O space 
-		ldi 	mpr, low(832) 	; Load low byte of 0x0340 
+		ldi 	mpr, low(416) 	; Load low byte of 0x0340 
 		sts 	UBRR1L, mpr 	
 
 		;Enable receiver and enable receive interrupts

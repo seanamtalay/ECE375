@@ -120,22 +120,6 @@ MAIN:
 		
 		jmp  MAIN
 
-;USART_Address:
-;		lds   mpr, UCSR1A
-; Check if buffer is empty
-;		sbrs  mpr, UDRE1
-;		jmp  USART_Address
-;		ldi   mpr, BotAddress
-;		sts   UDR1, mpr
-;USART_Command:
-;		lds   mpr, UCSR1A
-; Check if buffer is empty
-;		sbrs  mpr, UDRE1
-;		jmp  USART_Command
-;		sts   UDR1, toSend
-		; Output last send command to LEDS
-;		out   PORTB, toSend 
-;		jmp  MAIN
 		
 ;***********************************************************
 ;*	Functions and Subroutines

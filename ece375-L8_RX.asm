@@ -152,6 +152,7 @@ USART_Receive:
 
 		
 command:
+		ldi 	mpr, MovFwd
 		out 	PORTB, mpr
 		
 		

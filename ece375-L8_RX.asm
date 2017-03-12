@@ -23,8 +23,9 @@
 .def	waitcnt = r18			; Wait Loop Counter 
 .def	ilcnt = r19				; Inner Loop Counter 
 .def	olcnt = r20				; Outer Loop Counter 
-.def	addr_flag = r21	
-.def	prev_move = r22
+.def	speed = r21	
+.def	speed_level = r22
+
 .equ	WTime = 100				; Time to wait in wait loop
 .equ	WskrR = 0				; Right Whisker Input Bit
 .equ	WskrL = 1				; Left Whisker Input Bit
@@ -118,6 +119,13 @@ INIT:
 		;Set the Interrupt Sense Control to falling edge detection
 		ldi		mpr, (1<<ISC01) | (0<<ISC00) | (1<<ISC11) | (0<<ISC10)
 		sts		EICRA, mpr		;Use sts, EICRA in extended I/O space
+	
+	; Configure 8-bit Timer/Counters
+		ldi		mpr, 0b01010000	; Fast PWM w/ toggle
+		out		TCCR0, mpr		;
+		ldi		mpr, 0b01010000
+		out		TCCR2, mpr		;
+		
 		
 	; Initialize Fwd Movement
 		ldi 	mpr, MovFwd
@@ -130,6 +138,103 @@ INIT:
 ;*	Main Program
 ;***********************************************************
 MAIN:
+		;default state
+		ldi		speed_level, 0		;
+		out		OCR0, speed_level		;
+		out		OCR2, speed_level		;
+
+		ldi		speed, 0		;
+		sbr		mpr, (0<<7) 
+		andi	mpr, $60		;
+		or		mpr, speed		;
+		out		PORTB, mpr		;
+
+		
+		; move forward
+		ldi		mpr, (1<<EngDirL|1<<EngDirR)	;
+		out		PORTB, mpr		;
+		; poll Port D pushbuttons (if needed)
+
+INPUT0:;min speed
+		rcall	UPLOAD			;
+		in		mpr, PIND		;
+		andi	mpr, (1<<4|1<<5|1<<6|1<<7);
+
+		cpi		mpr, (1<<5|1<<6|1<<7)	; 
+		brne	INPUT1			;
+
+		ldi		waitcnt, 30	;
+		rcall	Wait			;
+
+		ldi		speed_level, 0		;Set speed and speed level to 0 
+		ldi		speed, 0
+
+		out		OCR0, speed_level;
+		out		OCR2, speed_level;
+		rjmp	INPUT0			;	
+
+INPUT1:;max speed 
+		cpi		mpr, (1<<4|1<<6|1<<7)	;	
+		brne	INPUT2			;
+
+		ldi		waitcnt, 30	;
+		rcall	Wait			;
+
+		ldi		speed_level, 15	;
+		ldi		speed, $F		;
+
+		out		OCR0, speed_level;
+		out		OCR2, speed_level;
+
+		rjmp	INPUT0			;
+
+INPUT2:;-speed
+		cpi		mpr, (1<<4|1<<5|1<<7);
+		brne	INPUT3			;
+
+		ldi		waitcnt, 30	;
+		rcall	Wait			;
+
+		cpi		speed_level,0	; check if speed already at min
+		breq	INPUT0			;
+
+		ldi		mpr, 1			;
+		sub		speed, mpr 		;
+		dec		speed_level		;
+
+		out		OCR0, speed_level;
+		out		OCR2, speed_level;
+		rjmp	INPUT0			;
+
+INPUT3:;+speed
+		cpi		mpr,(1<<4|1<<5|1<<6)	;
+		brne	INPUT0			;
+
+		ldi		waitcnt, 30	;
+		rcall	Wait			;
+
+		cpi		speed_level,15	;
+		breq	INPUT0			;
+
+		ldi		mpr, 1			;
+		add		speed, mpr 		;
+		inc		speed_level		;
+
+		out		OCR0, speed_level;
+		out		OCR2, speed_level;
+		rjmp	INPUT0			;
+
+;######################
+UPLOAD: 
+		in		mpr, PORTB		;
+		
+		andi	mpr, $60		;
+		or		mpr, speed		;
+		
+		out		PORTB, mpr		;
+		ret
+	
+		
 		rjmp	MAIN
 
 ;***********************************************************

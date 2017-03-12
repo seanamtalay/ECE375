@@ -141,8 +141,7 @@ MAIN:
 ;----------------------------------------------------------------
 USART_Receive:
 		push	mpr			; Save mpr register
-
-		;lds 	mpr, UDR1
+		push 	waitcnt
 		lds  	mpr, UDR1			; Read data from Receive Data Buffer
 		
 		ldi		mpr2, 0b00001001				;if byte is an address, skip
@@ -152,13 +151,13 @@ USART_Receive:
 
 		
 command:
-		ldi 	mpr, MovFwd
 		out 	PORTB, mpr
-		
-		
+		ldi 	waitcnt, 100
+		rcall	Wait
 		brne  	end_receive
 
 end_receive:
+		pop 	waitcnt
 		pop   	mpr
 		ret
 		

@@ -255,7 +255,7 @@ USART_Receive:
 		ldi		mpr2, BotAddress
 		cpse   	mpr, mpr2	
 		out 	PORTB, mpr	
-		
+
 		;ldi 	mpr,(1<<TXEN1)|(0<<RXEN1)|(0<<RXCIE1)
 		;sts 	UCSR1B, mpr
 		ldi 	waitcnt, WTime
@@ -266,17 +266,17 @@ USART_Receive:
 		;ldi 	mpr,(1<<TXEN1)|(1<<RXEN1)|(1<<RXCIE1)
 		;sts 	UCSR1B, mpr
 		
+		
+
 		ldi 	mpr, MovFwd
 		out 	PORTB, mpr		
-		
-		pop mpr
-		out SREG, mpr
+
+		pop 	mpr
+		out 	SREG, mpr
 		pop 	waitcnt
 		pop   	mpr
 		ret
-		
 
-		
 ;----------------------------------------------------------------
 ; Sub:	HitRight
 ; Desc:	Handles functionality of the TekBot when the right whisker

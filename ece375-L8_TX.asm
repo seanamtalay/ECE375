@@ -29,6 +29,7 @@
 .equ	EngEnL = 7				; Left Engine Enable Bit
 .equ	EngDirR = 5				; Right Engine Direction Bit
 .equ	EngDirL = 6				; Left Engine Direction Bit
+
 ; Use these action codes between the remote and robot
 ; MSB = 1 thus:
 .equ 	BotAddress = 0b10001001
@@ -37,7 +38,11 @@
 .equ	MovBck =  ($80|$00)								;0b10000000 Move Backward Action Code
 .equ	TurnR =   ($80|1<<(EngDirL-1))					;0b10100000 Turn Right Action Code
 .equ	TurnL =   ($80|1<<(EngDirR-1))					;0b10010000 Turn Left Action Code
-.equ	Halt =    ($80|1<<(EngEnR-1)|1<<(EngEnL-1))		;0b11001000 Halt Action Code
+.equ	SpeedUp = ($80|1<<(EngDirL))					;0b11000000 Speed Up Action Code
+.equ	SpeedDown = (1<<(EngDirR-1)|1<<(EngDirL-1))		;0b00110000 Speed Down Action Code
+.equ 	SpeedMax = ($80|1<<(EngDirL-1))					;0b10100000 Speed Max Action Code
+.equ 	SpeedMin = (1<<(EngDirR-1)|1<<(EngDirL))
+
 ;***********************************************************
 ;*	Start of Code Segment
 ;***********************************************************
@@ -105,6 +110,14 @@ MAIN:
 		rjmp  TRANSMIT_FWD
 		sbrs  mpr, 4		
 		rjmp  TRANSMIT_BCK
+		sbrs  mpr, 3
+		rjmp  TRANSMIT_SPD_MAX
+		sbrs  mpr, 2
+		rjmp  TRANSMIT_SPD_MIN
+		sbrs  mpr, 1
+		rjmp  TRANSMIT_SPD_UP
+		sbrs  mpr, 0
+		rjmp  TRANSMIT_SPD_DOWN
 		
 		rjmp 	MAIN
 
@@ -204,7 +217,103 @@ TRANSMIT_BCK_LOOP2:
 
 ;************************************************************
 
+TRANSMIT_SPD_UP:
+		ldi 	mpr, BotAddress
+		sts 	UDR1, mpr
+		
+		
+TRANSMIT_SPD_UP_LOOP1:
+		lds 	mpr, UCSR1A
+		sbrs 	mpr, UDRE1
+		rcall 	TRANSMIT_SPD_UP_LOOP1
+		
+		ldi 	mpr, SpeedUp
+		sts 	UDR1, mpr
+		out 	PORTB, mpr
+		ldi		waitcnt, 250
+		rcall	Wait
+		
+TRANSMIT_SPD_UP_LOOP2:
+		lds 	mpr, UCSR1A
+		sbrs 	mpr, UDRE1
+		rjmp 	TRANSMIT_SPD_UP_LOOP2
+		
+		rjmp 	MAIN
 
+;************************************************************
+
+TRANSMIT_SPD_DOWN:
+		ldi 	mpr, BotAddress
+		sts 	UDR1, mpr
+		
+		
+TRANSMIT_SPD_DOWN_LOOP1:
+		lds 	mpr, UCSR1A
+		sbrs 	mpr, UDRE1
+		rcall 	TRANSMIT_SPD_DOWN_LOOP1
+		
+		ldi 	mpr, SpeedDown
+		sts 	UDR1, mpr
+		out 	PORTB, mpr
+		ldi		waitcnt, 250
+		rcall	Wait
+		
+TRANSMIT_SPD_DOWN_LOOP2:
+		lds 	mpr, UCSR1A
+		sbrs 	mpr, UDRE1
+		rjmp 	TRANSMIT_SPD_DOWN_LOOP2
+		
+		rjmp 	MAIN
+
+;************************************************************
+
+TRANSMIT_SPD_MAX:
+		ldi 	mpr, BotAddress
+		sts 	UDR1, mpr
+		
+		
+TRANSMIT_SPD_MAX_LOOP1:
+		lds 	mpr, UCSR1A
+		sbrs 	mpr, UDRE1
+		rcall 	TRANSMIT_SPD_MAX_LOOP1
+		
+		ldi 	mpr, SpeedMax
+		sts 	UDR1, mpr
+		out 	PORTB, mpr
+		ldi		waitcnt, 250
+		rcall	Wait
+		
+TRANSMIT_SPD_MAX_LOOP2:
+		lds 	mpr, UCSR1A
+		sbrs 	mpr, UDRE1
+		rjmp 	TRANSMIT_SPD_MAX_LOOP2
+		
+		rjmp 	MAIN
+
+;************************************************************
+
+TRANSMIT_SPD_MIN:
+		ldi 	mpr, BotAddress
+		sts 	UDR1, mpr
+		
+		
+TRANSMIT_SPD_MIN_LOOP1:
+		lds 	mpr, UCSR1A
+		sbrs 	mpr, UDRE1
+		rcall 	TRANSMIT_SPD_MIN_LOOP1
+		
+		ldi 	mpr, SpeedMin
+		sts 	UDR1, mpr
+		out 	PORTB, mpr
+		ldi		waitcnt, 250
+		rcall	Wait
+		
+TRANSMIT_SPD_MIN_LOOP2:
+		lds 	mpr, UCSR1A
+		sbrs 	mpr, UDRE1
+		rjmp 	TRANSMIT_SPD_MIN_LOOP2
+		
+		rjmp 	MAIN
 ;************************************************************
 ;----------------------------------------------------------------
 ; Sub:	Wait

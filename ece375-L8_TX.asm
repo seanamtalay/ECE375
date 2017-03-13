@@ -32,7 +32,7 @@
 
 ; Use these action codes between the remote and robot
 ; MSB = 1 thus:
-.equ 	BotAddress = 0b10001001
+.equ 	BotAddress = 0b11111111
 ; control signals are shifted right by one and ORed with 0b10000000 = $80
 .equ	MovFwd =  ($80|1<<(EngDirR-1)|1<<(EngDirL-1))	;0b10110000 Move Forward Action Code
 .equ	MovBck =  ($80|$00)								;0b10000000 Move Backward Action Code
@@ -128,7 +128,8 @@ MAIN:
 TRANSMIT_R:
 		ldi 	mpr, BotAddress
 		sts 	UDR1, mpr
-		
+		ldi 	waitcnt, 250
+		rcall 	Wait
 		
 TRANSMIT_R_LOOP1:
 		lds 	mpr, UCSR1A

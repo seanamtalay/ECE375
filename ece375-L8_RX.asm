@@ -34,7 +34,7 @@
 .equ	EngDirR = 5				; Right Engine Direction Bit
 .equ	EngDirL = 6				; Left Engine Direction Bit
 
-.equ	BotAddress = 0b10001001
+.equ	BotAddress = 0b11111111
 
 ;/////////////////////////////////////////////////////////////
 ;These macros are the values to make the TekBot Move.
@@ -163,13 +163,16 @@ USART_Receive:
 		;push 	waitcnt
 		;in		mpr, SREG
 		;push	mpr
-		
 		lds  	mpr, UDR1			; Read data from Receive Data Buffer
 		;ldi		mpr2, 0b10001001				;if byte is an address, skip
 		ldi		mpr2, BotAddress
 		cpse   	mpr, mpr2	
+		ret
+		ldi		waitcnt, 55
+		rcall	Wait
+
 		
-		
+		lds		mpr, UDR1
 		out 	PORTB, mpr			;Print Action Code
 
 		;ldi 	mpr,(1<<TXEN1)|(0<<RXEN1)|(0<<RXCIE1)

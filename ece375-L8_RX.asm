@@ -351,7 +351,7 @@ HitLeft:
 		
 		pop		mpr							; Restore program state
 		out		SREG, mpr					;
-		pop		waitcnt						; Restore wait register
+		pop		waitcnt						; Restore wait register	
 		pop		mpr							; Restore mpr
 		ret									; Return from subroutine
 

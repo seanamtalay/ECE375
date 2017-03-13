@@ -85,7 +85,7 @@ INIT:
 		sts 	UBRR1L, mpr 	
 
 		;Enable receiver and enable receive interrupts
-		ldi 	mpr, (1<<TXEN1) 
+		ldi 	mpr, (1<<TXEN1 | 1<<RXEN1) 
 		sts 	UCSR1B, mpr 		
 
 		;Set frame format: 8 data bits, 2 stop bits

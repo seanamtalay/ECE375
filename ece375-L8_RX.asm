@@ -168,7 +168,9 @@ USART_Receive:
 		;ldi		mpr2, 0b10001001				;if byte is an address, skip
 		ldi		mpr2, BotAddress
 		cpse   	mpr, mpr2	
-		out 	PORTB, mpr	
+		
+		
+		out 	PORTB, mpr			;Print Action Code
 
 		;ldi 	mpr,(1<<TXEN1)|(0<<RXEN1)|(0<<RXCIE1)
 		;sts 	UCSR1B, mpr
@@ -254,7 +256,7 @@ INPUT3:;+speed
 ;######################
 UPLOAD: 
 		;in		mpr, PORTB		;
-		ldi		mpr, MovFwd
+		ldi		mpr, Halt
 		;andi	mpr, $60		;
 		or		mpr, speed		;
 		

@@ -126,7 +126,17 @@ INIT:
 		ldi		mpr, 0b01010000
 		out		TCCR2, mpr		;
 		
-		
+		;default state
+		ldi		speed_level, 0		;
+		out		OCR0, speed_level		;
+		out		OCR2, speed_level		;
+
+		ldi		speed, 0		;
+		;sbr		mpr, (0<<7) 
+		andi	mpr, $F0		;
+		or		mpr, speed		;
+		out		PORTB, mpr		;
+
 	; Initialize Fwd Movement
 		ldi 	mpr, MovFwd
 		out 	PORTB, mpr		
@@ -138,104 +148,8 @@ INIT:
 ;*	Main Program
 ;***********************************************************
 MAIN:
-		;default state
-		ldi		speed_level, 0		;
-		out		OCR0, speed_level		;
-		out		OCR2, speed_level		;
+		rjmp MAIN
 
-		ldi		speed, 0		;
-		sbr		mpr, (0<<7) 
-		andi	mpr, $60		;
-		or		mpr, speed		;
-		out		PORTB, mpr		;
-
-		
-		; move forward
-		ldi		mpr, (1<<EngDirL|1<<EngDirR)	;
-		out		PORTB, mpr		;
-		; poll Port D pushbuttons (if needed)
-
-INPUT0:;min speed
-		rcall	UPLOAD			;
-		in		mpr, PIND		;
-		andi	mpr, (1<<4|1<<5|1<<6|1<<7);
-
-		cpi		mpr, (1<<5|1<<6|1<<7)	; 
-		brne	INPUT1			;
-
-		ldi		waitcnt, 30	;
-		rcall	Wait			;
-
-		ldi		speed_level, 0		;Set speed and speed level to 0 
-		ldi		speed, 0
-
-		out		OCR0, speed_level;
-		out		OCR2, speed_level;
-		rjmp	INPUT0			;	
-
-INPUT1:;max speed 
-		cpi		mpr, (1<<4|1<<6|1<<7)	;	
-		brne	INPUT2			;
-
-		ldi		waitcnt, 30	;
-		rcall	Wait			;
-
-		ldi		speed_level, 15	;
-		ldi		speed, $F		;
-
-		out		OCR0, speed_level;
-		out		OCR2, speed_level;
-
-		rjmp	INPUT0			;
-
-INPUT2:;-speed
-		cpi		mpr, (1<<4|1<<5|1<<7);
-		brne	INPUT3			;
-
-		ldi		waitcnt, 30	;
-		rcall	Wait			;
-
-		cpi		speed_level,0	; check if speed already at min
-		breq	INPUT0			;
-
-		ldi		mpr, 1			;
-		sub		speed, mpr 		;
-		dec		speed_level		;
-
-		out		OCR0, speed_level;
-		out		OCR2, speed_level;
-		rjmp	INPUT0			;
-
-INPUT3:;+speed
-		cpi		mpr,(1<<4|1<<5|1<<6)	;
-		brne	INPUT0			;
-
-		ldi		waitcnt, 30	;
-		rcall	Wait			;
-
-		cpi		speed_level,15	;
-		breq	INPUT0			;
-
-		ldi		mpr, 1			;
-		add		speed, mpr 		;
-		inc		speed_level		;
-
-		out		OCR0, speed_level;
-		out		OCR2, speed_level;
-		rjmp	INPUT0			;
-
-;######################
-UPLOAD: 
-		in		mpr, PORTB		;
-		
-		andi	mpr, $60		;
-		or		mpr, speed		;
-		
-		out		PORTB, mpr		;
-		ret
-	
-		
-		rjmp	MAIN
 
 ;***********************************************************
 ;*	Functions and Subroutines
@@ -245,10 +159,10 @@ UPLOAD:
 ; Desc:	Receive USART Command from Transmitter 
 ;----------------------------------------------------------------
 USART_Receive:
-		push	mpr			; Save mpr register
-		push 	waitcnt
-		in		mpr, SREG
-		push	mpr
+		;push	mpr			; Save mpr register
+		;push 	waitcnt
+		;in		mpr, SREG
+		;push	mpr
 		
 		lds  	mpr, UDR1			; Read data from Receive Data Buffer
 		;ldi		mpr2, 0b10001001				;if byte is an address, skip
@@ -261,6 +175,17 @@ USART_Receive:
 		ldi 	waitcnt, WTime
 		rcall 	Wait
 
+		cpi		mpr, (1<<6|1<<4)						;Min
+		breq	INPUT0
+		cpi		mpr, ($80|1<<(EngDirL-1))				;Max
+		breq	INPUT1
+		cpi		mpr, (1<<(EngDirR-1)|1<<(EngDirL-1))	;Down
+		breq	INPUT2
+		cpi		mpr,($80|1<<(EngDirL))					;Up
+		breq	INPUT3
+
+		rcall UPLOAD
+
 		ldi		mpr, (1<<INT0 | 1<<INT1)	;Clean Queue
 		out		EIFR, mpr
 		;ldi 	mpr,(1<<TXEN1)|(1<<RXEN1)|(1<<RXCIE1)
@@ -268,15 +193,74 @@ USART_Receive:
 		
 		
 
-		ldi 	mpr, MovFwd
-		out 	PORTB, mpr		
+		;ldi 	mpr, MovFwd
+		;out 	PORTB, mpr		
 
-		pop 	mpr
-		out 	SREG, mpr
-		pop 	waitcnt
-		pop   	mpr
+		;pop 	mpr
+		;out 	SREG, mpr
+		;pop 	waitcnt
+		;pop   	mpr
 		ret
 
+
+INPUT0:;min speed
+		ldi		speed_level, 0		;Set speed and speed level to 0 
+		ldi		speed, 0
+
+		out		OCR0, speed_level;
+		out		OCR2, speed_level;
+		;rjmp	INPUT0			;	
+		rcall	UPLOAD			;
+		ret
+
+INPUT1:;max speed 
+		ldi		speed_level, 15	;
+		ldi		speed, $F		;
+
+		out		OCR0, speed_level;
+		out		OCR2, speed_level;
+		rcall   UPLOAD
+		ret
+		;rjmp	INPUT0			;
+
+INPUT2:;-speed
+		cpi		speed_level,0	; check if speed already at min
+		breq	INPUT0			;
+
+		;ldi		mpr, 1			;
+		;sub		speed, mpr 		;
+		dec		speed
+		dec		speed_level		;
+
+		out		OCR0, speed_level;
+		out		OCR2, speed_level;
+		;rjmp	INPUT0			;
+		rcall	UPLOAD			;
+		ret
+
+INPUT3:;+speed
+		cpi		speed_level,15	;
+		breq	INPUT1			;
+
+		ldi		mpr, 1			;
+		add		speed, mpr 		;
+		inc		speed_level		;
+
+		out		OCR0, speed_level;
+		out		OCR2, speed_level;
+		;rjmp	INPUT0			;
+		rcall	UPLOAD
+		ret
+;######################
+UPLOAD: 
+		;in		mpr, PORTB		;
+		ldi		mpr, MovFwd
+		;andi	mpr, $60		;
+		or		mpr, speed		;
+		
+		out		PORTB, mpr		;
+		ret
+	
 ;----------------------------------------------------------------
 ; Sub:	HitRight
 ; Desc:	Handles functionality of the TekBot when the right whisker

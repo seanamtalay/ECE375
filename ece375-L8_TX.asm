@@ -41,7 +41,7 @@
 .equ	SpeedUp = ($80|1<<(EngDirL))					;0b11000000 Speed Up Action Code
 .equ	SpeedDown = (1<<(EngDirR-1)|1<<(EngDirL-1))		;0b00110000 Speed Down Action Code
 .equ 	SpeedMax = ($80|1<<(EngDirL-1))					;0b10100000 Speed Max Action Code
-.equ 	SpeedMin = (1<<(EngDirR-1)|1<<(EngDirL))
+.equ 	SpeedMin = (1<<(EngDirR-1)|1<<(EngDirL))		;0b01010000 Speed Min Action Code
 
 ;***********************************************************
 ;*	Start of Code Segment

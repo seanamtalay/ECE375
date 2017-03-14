@@ -1,15 +1,12 @@
 ;***********************************************************
 ;* 
-;*	Lab 8 RX
+;*	Lab 8 RX - ROBOT
 ;*
-;*	Enter the description of the program here
-;*
-;*	This is the RECEIVE skeleton file for Lab 8 of ECE 375
 ;*
 ;***********************************************************
 ;*
-;*	 Author: Enter your name
-;*	   Date: Enter Date
+;*	 Author: Samuel Jia Khai Lee & Namtalay Laorattanavech
+;*	   Date: 3/13/2017
 ;*
 ;***********************************************************
 

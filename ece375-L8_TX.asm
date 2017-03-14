@@ -1,15 +1,12 @@
 ;***********************************************************
 ;*
-;*	Lab 8 TX
+;*	Lab 8 TX - REMOTE
 ;*
-;*	Enter the description of the program here
-;*
-;*	This is the TRANSMIT skeleton file for Lab 8 of ECE 375
 ;*
 ;***********************************************************
 ;*
-;*	 Author: Enter your name
-;*	   Date: Enter Date
+;*	 Author: Samuel Jia Khai Lee & Namtalay Laorattanavech
+;*	   Date: 3/13/2017
 ;*
 ;***********************************************************
 

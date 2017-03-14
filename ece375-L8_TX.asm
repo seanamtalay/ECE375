@@ -91,6 +91,11 @@ INIT:
 		;Set frame format: 8 data bits, 2 stop bits
 		ldi 	mpr, (1<<UCSZ10)|(1<<UCSZ11)|(1<<USBS1)|(1<<UPM01) 
 		sts 	UCSR1C, mpr 		; UCSR0C in extended I/O space
+	
+	;External Interrupts
+		;Set the External Interrupt Mask
+		ldi		mpr, (1<<INT0) | (1<<INT1)
+		out		EIMSK, mpr
 
 	clr mpr
 	out PORTB, mpr
@@ -102,8 +107,8 @@ INIT:
 MAIN:
 		in    mpr, PIND
 		
-		sbrs  mpr, 7
-		rjmp  TRANSMIT_R
+		sbrs  mpr, 7				;Check if each button/bit is cleared
+		rjmp  TRANSMIT_R			;Then go to respective functions to transmit Bot Address and Action Code
 		sbrs  mpr, 6		
 		rjmp  TRANSMIT_L
 		sbrs  mpr, 5		
@@ -119,26 +124,30 @@ MAIN:
 		sbrs  mpr, 0
 		rjmp  TRANSMIT_SPD_DOWN
 		
+		ldi		mpr, (1<<INT0 | 1<<INT1)	;Clean Queue
+		out		EIFR, mpr
+
 		rjmp 	MAIN
 
 ;***********************************************************
 ;*	Functions and Subroutines
 ;***********************************************************
 
-TRANSMIT_R:
-		ldi 	mpr, BotAddress
+TRANSMIT_R:							;Transmit Bot Address using UDR1 to be checked for Transmit Right Function
+		ldi		mpr2, (1<<7)		;if transmitter and receiver have the same address
+		out 	PORTB, mpr2
+		ldi 	mpr, BotAddress		
 		sts 	UDR1, mpr
-		ldi 	waitcnt, 250
+		ldi 	waitcnt, 55
 		rcall 	Wait
 		
-TRANSMIT_R_LOOP1:
+TRANSMIT_R_LOOP1:					;Transmit Bot address and check if USART Data Register Empty is cleared
 		lds 	mpr, UCSR1A
 		sbrs 	mpr, UDRE1
 		rcall 	TRANSMIT_R_LOOP1
 		
 		ldi 	mpr, TurnR
 		sts 	UDR1, mpr
-		out 	PORTB, mpr
 		ldi		waitcnt, 250
 		rcall	Wait
 		
@@ -151,9 +160,14 @@ TRANSMIT_R_LOOP2:
 
 ;************************************************************
 
-TRANSMIT_L:
-		ldi 	mpr, BotAddress
+TRANSMIT_L:							;Transmit Bot Address using UDR1 to be checked for Transmit Left Function
+		ldi		mpr2, (1<<6)		;if transmitter and receiver have the same address
+		out 	PORTB, mpr2		
+		ldi 	mpr, BotAddress		
 		sts 	UDR1, mpr
+		ldi 	waitcnt, 55
+		rcall 	Wait
+
 TRANSMIT_L_LOOP1:
 		lds 	mpr, UCSR1A
 		sbrs 	mpr, UDRE1
@@ -161,7 +175,6 @@ TRANSMIT_L_LOOP1:
 		
 		ldi 	mpr, TurnL
 		sts 	UDR1, mpr
-		out 	PORTB, mpr
 		ldi		waitcnt, 250
 		rcall	Wait
 TRANSMIT_L_LOOP2:
@@ -171,10 +184,15 @@ TRANSMIT_L_LOOP2:
 		
 		rjmp 	MAIN
 
+;************************************************************
 
-TRANSMIT_FWD:
-		ldi 	mpr, BotAddress
+TRANSMIT_FWD:						;Transmit Bot Address using UDR1 to be checked for Transmit Forward Function
+		ldi		mpr2, (1<<5)		;if transmitter and receiver have the same address
+		out 	PORTB, mpr2
+		ldi 	mpr, BotAddress		
 		sts 	UDR1, mpr
+		ldi 	waitcnt, 55
+		rcall 	Wait
 		
 TRANSMIT_FWD_LOOP1:
 		lds 	mpr, UCSR1A
@@ -183,7 +201,6 @@ TRANSMIT_FWD_LOOP1:
 		
 		ldi 	mpr, MovFwd
 		sts 	UDR1, mpr
-		out 	PORTB, mpr
 		ldi		waitcnt, 250
 		rcall	Wait
 TRANSMIT_FWD_LOOP2:
@@ -195,9 +212,13 @@ TRANSMIT_FWD_LOOP2:
 
 ;************************************************************
 
-TRANSMIT_BCK:
-		ldi 	mpr, BotAddress
+TRANSMIT_BCK:						;Transmit Bot Address using UDR1 to be checked for Transmit Backward Function
+		ldi		mpr2, (1<<4)		;if transmitter and receiver have the same address
+		out 	PORTB, mpr2
+		ldi 	mpr, BotAddress		
 		sts 	UDR1, mpr
+		ldi 	waitcnt, 55
+		rcall 	Wait
 		
 TRANSMIT_BCK_LOOP1:
 		lds 	mpr, UCSR1A
@@ -206,7 +227,6 @@ TRANSMIT_BCK_LOOP1:
 		
 		ldi 	mpr, MovBck
 		sts 	UDR1, mpr
-		out 	PORTB, mpr
 		ldi		waitcnt, 250
 		rcall	Wait
 TRANSMIT_BCK_LOOP2:
@@ -218,10 +238,13 @@ TRANSMIT_BCK_LOOP2:
 
 ;************************************************************
 
-TRANSMIT_SPD_UP:
-		ldi 	mpr, BotAddress
+TRANSMIT_SPD_UP:					;Transmit Bot Address using UDR1 to be checked for Transmit Speed Up Function
+		ldi		mpr2, (1<<1)		;if transmitter and receiver have the same address
+		out 	PORTB, mpr2
+		ldi 	mpr, BotAddress		
 		sts 	UDR1, mpr
-		
+		ldi 	waitcnt, 55
+		rcall 	Wait		
 		
 TRANSMIT_SPD_UP_LOOP1:
 		lds 	mpr, UCSR1A
@@ -230,7 +253,7 @@ TRANSMIT_SPD_UP_LOOP1:
 		
 		ldi 	mpr, SpeedUp
 		sts 	UDR1, mpr
-		out 	PORTB, mpr
+
 		ldi		waitcnt, 250
 		rcall	Wait
 		
@@ -243,10 +266,13 @@ TRANSMIT_SPD_UP_LOOP2:
 
 ;************************************************************
 
-TRANSMIT_SPD_DOWN:
-		ldi 	mpr, BotAddress
+TRANSMIT_SPD_DOWN:					;Transmit Bot Address using UDR1 to be checked for Transmit Speed Down Function
+		ldi		mpr2, (1<<0)		;if transmitter and receiver have the same address
+		out 	PORTB, mpr2
+		ldi 	mpr, BotAddress		
 		sts 	UDR1, mpr
-		
+		ldi 	waitcnt, 55
+		rcall 	Wait		
 		
 TRANSMIT_SPD_DOWN_LOOP1:
 		lds 	mpr, UCSR1A
@@ -255,7 +281,6 @@ TRANSMIT_SPD_DOWN_LOOP1:
 		
 		ldi 	mpr, SpeedDown
 		sts 	UDR1, mpr
-		out 	PORTB, mpr
 		ldi		waitcnt, 250
 		rcall	Wait
 		
@@ -268,10 +293,11 @@ TRANSMIT_SPD_DOWN_LOOP2:
 
 ;************************************************************
 
-TRANSMIT_SPD_MAX:
-		ldi 	mpr, BotAddress
+TRANSMIT_SPD_MAX:					;Transmit Bot Address using UDR1 to be checked for Transmit Speed Max Function
+		ldi 	mpr, BotAddress		;if transmitter and receiver have the same address
 		sts 	UDR1, mpr
-		
+		ldi 	waitcnt, 55
+		rcall 	Wait		
 		
 TRANSMIT_SPD_MAX_LOOP1:
 		lds 	mpr, UCSR1A
@@ -280,7 +306,8 @@ TRANSMIT_SPD_MAX_LOOP1:
 		
 		ldi 	mpr, SpeedMax
 		sts 	UDR1, mpr
-		out 	PORTB, mpr
+		ldi		mpr2, (1<<3)
+		out 	PORTB, mpr2
 		ldi		waitcnt, 250
 		rcall	Wait
 		
@@ -293,10 +320,13 @@ TRANSMIT_SPD_MAX_LOOP2:
 
 ;************************************************************
 
-TRANSMIT_SPD_MIN:
-		ldi 	mpr, BotAddress
+TRANSMIT_SPD_MIN:					;Transmit Bot Address using UDR1 to be checked for Transmit Speed Min Function
+		ldi		mpr2, (1<<2)		;if transmitter and receiver have the same address
+		out 	PORTB, mpr2
+		ldi 	mpr, BotAddress		
 		sts 	UDR1, mpr
-		
+		ldi 	waitcnt, 55
+		rcall 	Wait		
 		
 TRANSMIT_SPD_MIN_LOOP1:
 		lds 	mpr, UCSR1A
@@ -305,7 +335,6 @@ TRANSMIT_SPD_MIN_LOOP1:
 		
 		ldi 	mpr, SpeedMin
 		sts 	UDR1, mpr
-		out 	PORTB, mpr
 		ldi		waitcnt, 250
 		rcall	Wait
 		

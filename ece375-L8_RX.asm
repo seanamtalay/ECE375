@@ -127,12 +127,11 @@ INIT:
 		out		TCCR2, mpr		;
 		
 		;default state
-		ldi		speed_level, 0		;
-		out		OCR0, speed_level		;
-		out		OCR2, speed_level		;
+		ldi		speed_level, 0			;Initialize Speed level and clock
+		out		OCR0, speed_level		
+		out		OCR2, speed_level		
 
-		ldi		speed, 0		;
-		;sbr		mpr, (0<<7) 
+		ldi		speed, 0		;Initialize Speed
 		andi	mpr, $F0		;
 		or		mpr, speed		;
 		out		PORTB, mpr		;
@@ -159,111 +158,87 @@ MAIN:
 ; Desc:	Receive USART Command from Transmitter 
 ;----------------------------------------------------------------
 USART_Receive:
-		;push	mpr			; Save mpr register
-		;push 	waitcnt
-		;in		mpr, SREG
-		;push	mpr
-		lds  	mpr, UDR1			; Read data from Receive Data Buffer
-		;ldi		mpr2, 0b10001001				;if byte is an address, skip
-		ldi		mpr2, BotAddress
-		cpse   	mpr, mpr2	
+		lds  	mpr, UDR1			;Read Bot Address and compare
+		ldi		mpr2, BotAddress	;if Bot Address is incorrect, then return interrupt
+		cpse   	mpr, mpr2			;aka do nothing, else continue
 		ret
 		ldi		waitcnt, 55
 		rcall	Wait
 
 		
-		lds		mpr, UDR1
+		lds		mpr, UDR1			;Read Action Code and Print it
 		out 	PORTB, mpr			;Print Action Code
 
-		;ldi 	mpr,(1<<TXEN1)|(0<<RXEN1)|(0<<RXCIE1)
-		;sts 	UCSR1B, mpr
 		ldi 	waitcnt, WTime
 		rcall 	Wait
 
-		cpi		mpr, (1<<6|1<<4)						;Min
+		cpi		mpr, (1<<6|1<<4)			;Check Speed Min, Speed Max, Speed Down, Speed Up bits
 		breq	INPUT0
-		cpi		mpr, ($80|1<<(EngDirL-1))				;Max
+		cpi		mpr, ($80|1<<(EngDirL-1))				
 		breq	INPUT1
-		cpi		mpr, (1<<(EngDirR-1)|1<<(EngDirL-1))	;Down
+		cpi		mpr, (1<<(EngDirR-1)|1<<(EngDirL-1))	
 		breq	INPUT2
-		cpi		mpr,($80|1<<(EngDirL))					;Up
+		cpi		mpr,($80|1<<(EngDirL))					
 		breq	INPUT3
 
-		rcall UPLOAD
+		rcall UPLOAD						;Update Leds			
 
 		ldi		mpr, (1<<INT0 | 1<<INT1)	;Clean Queue
 		out		EIFR, mpr
-		;ldi 	mpr,(1<<TXEN1)|(1<<RXEN1)|(1<<RXCIE1)
-		;sts 	UCSR1B, mpr
 		
-		
+		ldi		waitcnt, 155
+		rcall	Wait
 
-		;ldi 	mpr, MovFwd
-		;out 	PORTB, mpr		
-
-		;pop 	mpr
-		;out 	SREG, mpr
-		;pop 	waitcnt
-		;pop   	mpr
 		ret
 
-
+;SPEED UP, SPEED DOWN, SPEED MIN, SPEED MAX FUNCTIONS FROM LAB 7
 INPUT0:;min speed
-		ldi		speed_level, 0		;Set speed and speed level to 0 
+		ldi		speed_level, 0		;Min Speed
 		ldi		speed, 0
 
-		out		OCR0, speed_level;
-		out		OCR2, speed_level;
-		;rjmp	INPUT0			;	
-		rcall	UPLOAD			;
+		out		OCR0, speed_level
+		out		OCR2, speed_level
+		rcall	UPLOAD			
 		ret
 
 INPUT1:;max speed 
-		ldi		speed_level, 15	;
-		ldi		speed, $F		;
+		ldi		speed_level, 15		;Max Speed
+		ldi		speed, $F		
 
-		out		OCR0, speed_level;
-		out		OCR2, speed_level;
+		out		OCR0, speed_level
+		out		OCR2, speed_level
 		rcall   UPLOAD
 		ret
-		;rjmp	INPUT0			;
 
 INPUT2:;-speed
-		cpi		speed_level,0	; check if speed already at min
-		breq	INPUT0			;
+		cpi		speed_level,0		;Check if Min speed, else dec speed and speed level
+		breq	INPUT0			
 
-		;ldi		mpr, 1			;
-		;sub		speed, mpr 		;
 		dec		speed
-		dec		speed_level		;
+		dec		speed_level		
 
-		out		OCR0, speed_level;
-		out		OCR2, speed_level;
-		;rjmp	INPUT0			;
-		rcall	UPLOAD			;
+		out		OCR0, speed_level
+		out		OCR2, speed_level
+		rcall	UPLOAD			
 		ret
 
 INPUT3:;+speed
-		cpi		speed_level,15	;
-		breq	INPUT1			;
+		cpi		speed_level,15		;Check if Max Speed, else inc speed and speed level
+		breq	INPUT1			
 
-		ldi		mpr, 1			;
-		add		speed, mpr 		;
-		inc		speed_level		;
+		ldi		mpr, 1			
+		inc 	speed
+		inc		speed_level		
 
-		out		OCR0, speed_level;
-		out		OCR2, speed_level;
-		;rjmp	INPUT0			;
+		out		OCR0, speed_level
+		out		OCR2, speed_level
 		rcall	UPLOAD
 		ret
 ;######################
 UPLOAD: 
-		;in		mpr, PORTB		;
-		ldi		mpr, Halt
-		;andi	mpr, $60		;
-		or		mpr, speed		;
-		
-		out		PORTB, mpr		;
+		ldi		mpr, Halt			;Update Leds
+		or		mpr, speed		
+		out		PORTB, mpr		
 		ret
 	
 ;----------------------------------------------------------------

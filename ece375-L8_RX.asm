@@ -183,7 +183,7 @@ USART_Receive:
 		ldi		mpr, (1<<INT0 | 1<<INT1)	;Clean Queue
 		out		EIFR, mpr
 		
-		ldi		waitcnt, 155
+		ldi		waitcnt, 160
 		rcall	Wait
 
 		ret
